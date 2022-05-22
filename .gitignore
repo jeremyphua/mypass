@@ -1,0 +1,3 @@
+# exclude db files
+*.db
+*.db.lock
