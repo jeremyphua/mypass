@@ -81,6 +81,29 @@ func AllCredentials() ([]Information, error) {
 	return infos, nil
 }
 
+func GetCredentials(site string) (Information, error) {
+	var info Information
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(infoBucket)
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if string(k) == site {
+				var user User
+				json.Unmarshal([]byte(v), &user)
+				info.Site = site
+				info.UserInfo.Username = user.Username
+				info.UserInfo.Password = user.Password
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return info, err
+	}
+	return info, nil
+}
+
 // Delete username/password
 func DeleteCredentials(key string) error {
 	return db.Update(func(tx *bolt.Tx) error {
