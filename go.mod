@@ -1,4 +1,4 @@
-module github.com/jpct96/password-cli
+module github.com/jeremyphua/password-cli
 
 go 1.18
 
