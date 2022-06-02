@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jeremyphua/password-cli/db"
+	"github.com/jeremyphua/mypass/db"
 	"github.com/spf13/cobra"
 )
 

@@ -11,9 +11,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "password-cli",
+	Use:   "mypass",
 	Short: "A tool to manage your password",
-	Long:  `password-cli is a CLI tool to enable users to manage their passwords through the terminal.`,
+	Long:  `mypass is a CLI tool to enable users to manage their passwords through the terminal.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
