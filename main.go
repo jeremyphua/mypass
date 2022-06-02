@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/jeremyphua/mypass/cmd"
-	"github.com/jeremyphua/mypass/db"
+	"github.com/jpct96/password-cli/cmd"
+	"github.com/jpct96/password-cli/db"
 )
 
 var (

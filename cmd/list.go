@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jeremyphua/mypass/db"
+	"github.com/jpct96/password-cli/db"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var infos []db.Information
 		// if first argument is all
-		// example: mypass list all
+		// example: password-cli list all
 		if args[0] == "all" {
 			// check if there are no other arguments after "all", if not exit
 			if len(args) > 1 {
