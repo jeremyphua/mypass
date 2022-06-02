@@ -1,6 +1,6 @@
-# password-cli: a command line tool for storing credentials for website
+# mypass: a command line tool for storing credentials for website
 
-password-cli is a command line tool built using Go which provides credentials management features. The goal of this project is to provide an easy way to manage password from the terminal instead of using 3rd party applications or storing all your credentials in a notepad. (like me)
+mypass is a command line tool built using Go which provides credentials management features. The goal of this project is to provide an easy way to manage password from the terminal instead of using 3rd party applications or storing all your credentials in a notepad. (like me)
 
 ## Installation
 
@@ -17,13 +17,13 @@ $ go install
 Add new credential:
 
 ```bash
-$ password-cli add -u <username> -p <password> 
+$ mypass add -u <username> -p <password> 
 ```
 
 Example:
 
 ```bash
-$ password-cli add Github -u Username123 -p Password123
+$ mypass add Github -u Username123 -p Password123
 ```
 
 ### list
@@ -31,19 +31,19 @@ $ password-cli add Github -u Username123 -p Password123
 List all credentials:
 
 ```bash
-$ password-cli list all
+$ mypass list all
 ```
 
 List website credential:
 
 ```bash
-$ password-cli list <Website or Application>
+$ mypass list <Website or Application>
 ```
 
 Example:
 
 ```bash
-$ password-cli list Github
+$ mypass list Github
 ```
 
 ### delete
@@ -51,7 +51,7 @@ $ password-cli list Github
 Delete credential:
 
 ```bash
-$ password-cli delete Github
+$ mypass delete Github
 ```
 
 
