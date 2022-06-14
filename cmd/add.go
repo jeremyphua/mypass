@@ -14,13 +14,13 @@ var password string
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:     "add",
+	Example: "mypass add money/ocbc",
 	Short:   "Add a file or password to your vault",
-	Example: "mypass add money/bank.com",
 	Long:    `Add a site to your password store. This site can optionally be a part of a group by prepending a group name and slash to the site name. Will prompt for confirmation when a site path is not unique.`,
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		siteName := args[0]
-		add.Password(siteName)
+		add.AddPassword(siteName)
 	},
 }
 

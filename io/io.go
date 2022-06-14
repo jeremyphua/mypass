@@ -13,14 +13,23 @@ import (
 )
 
 const (
-	SiteFileName           = "sites.json"
-	MasterPasswordFileName = "masterpass"
-	VaultFolderName        = "vault"
+	SiteFileName    = "sites.json"
+	ConfigFileName  = "masterpass"
+	VaultFolderName = "vault"
 )
 
+type ConfigFile struct {
+	MasterPrivKeySealed []byte
+	MasterPubKey        [32]byte
+}
+
+// SiteInfo represents a single saved password entry.
 type SiteInfo struct {
-	Name           string
-	HashedPassword string
+	PubKey     [32]byte
+	PassSealed []byte
+	Name       string
+	FileName   string
+	IsFile     bool
 }
 
 // contents of sites.json
@@ -70,10 +79,9 @@ func GetSiteFile() (d string, err error) {
 	return
 }
 
-// Determine if master password already exist
-// Master password is stored in a file
-func MasterPasswordExists() (bool, error) {
-	c, err := GetMasterPassword()
+// Determine if config file already exist
+func ConfigFileExists() (bool, error) {
+	c, err := GetConfigFile()
 	if err != nil {
 		return false, err
 	}
@@ -84,12 +92,12 @@ func MasterPasswordExists() (bool, error) {
 	return true, nil
 }
 
-// GetMasterPassword is used to get the user's master password file
+// GetConfigFile is used to get the user's config file
 // Example: C:\Users\<name of user>\.mypass\masterpass
-func GetMasterPassword() (p string, err error) {
+func GetConfigFile() (p string, err error) {
 	d, err := GetPassDir()
 	if err == nil {
-		p = filepath.Join(d, MasterPasswordFileName)
+		p = filepath.Join(d, ConfigFileName)
 	}
 	return
 }
@@ -135,7 +143,39 @@ func GetVaultFolder() (v string, err error) {
 }
 
 // Add SiteInfo to sites.json
-func (s *SiteInfo) AddFile() error {
+func (s *SiteInfo) AddFile(fileBytes []byte, filename string) error {
+	encFileDir, err := GetVaultFolder()
+	if err != nil {
+		return err
+	}
+	// Make sure that the file directory exists.
+	fileDirExists, err := ConfigFileExists()
+	if err != nil {
+		return err
+	}
+	if !fileDirExists {
+		err = os.Mkdir(encFileDir, 0700)
+		if err != nil {
+			log.Fatalf("Could not create passgo encrypted file dir: %s", err.Error())
+		}
+	}
+	encFilePath := filepath.Join(encFileDir, filename)
+	dir, _ := filepath.Split(encFilePath)
+	err = os.MkdirAll(dir, 0700)
+	if err != nil {
+		log.Fatalf("Could not create subdirectory: %s", err.Error())
+	}
+	err = ioutil.WriteFile(encFilePath, fileBytes, 0666)
+	if err != nil {
+		return err
+	}
+
+	// We still need to add this site info to the bytes.
+	return s.AddSite()
+}
+
+// AddSite is used by individual password entries to update the vault.
+func (s *SiteInfo) AddSite() (err error) {
 	siteFile := GetSites()
 	for _, si := range siteFile {
 		if s.Name == si.Name {
@@ -143,7 +183,7 @@ func (s *SiteInfo) AddFile() error {
 		}
 	}
 	siteFile = append(siteFile, *s)
-	return UpdateSitesFile(siteFile)
+	return UpdateVault(siteFile)
 }
 
 // Returns SiteFile which is a slice of SiteInfo
@@ -166,6 +206,22 @@ func GetSites() (s SiteFile) {
 	return
 }
 
+// UpdateVault is used to replace the current password vault.
+func UpdateVault(s SiteFile) (err error) {
+	si, err := GetSiteFile()
+	if err != nil {
+		log.Fatalf("Could not get pass dir: %s", err.Error())
+	}
+	siteFileContents, err := json.MarshalIndent(s, "", "\t")
+	if err != nil {
+		log.Fatalf("Could not marshal site info: %s", err.Error())
+	}
+
+	// Write the site with the newly appended site to the file.
+	err = ioutil.WriteFile(si, siteFileContents, 0666)
+	return
+}
+
 func UpdateSitesFile(s SiteFile) (err error) {
 	si, err := GetSiteFile()
 	if err != nil {
@@ -180,21 +236,21 @@ func UpdateSitesFile(s SiteFile) (err error) {
 	return
 }
 
-func SaveFile(s string) (err error) {
-	if exists, err := MasterPasswordExists(); err != nil {
-		log.Fatalf("Could not find master password file: %s", err.Error())
+func (c *ConfigFile) SaveFile() (err error) {
+	if exists, err := ConfigFileExists(); err != nil {
+		log.Fatalf("Could not find config file: %s", err.Error())
 	} else if !exists {
 		log.Fatalf("pass config could not be found %s", err.Error())
 	}
-	sBytes, err := json.MarshalIndent(s, "", "\t")
+	cBytes, err := json.MarshalIndent(c, "", "\t")
 	if err != nil {
-		log.Fatalf("Could not marshal master password file: %s", err.Error())
+		log.Fatalf("Could not marshal config file: %s", err.Error())
 	}
-	cfg, err := GetMasterPassword()
+	cfg, err := GetConfigFile()
 	if err != nil {
-		log.Fatalf("Could not get master password file: %s", err.Error())
+		log.Fatalf("Could not get config file: %s", err.Error())
 	}
-	err = ioutil.WriteFile(cfg, sBytes, 0666)
+	err = ioutil.WriteFile(cfg, cBytes, 0666)
 	return
 }
 

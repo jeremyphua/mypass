@@ -1,50 +1,63 @@
 package add
 
 import (
+	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 
-	"github.com/alexedwards/argon2id"
 	"github.com/jeremyphua/mypass/io"
+	"github.com/jeremyphua/mypass/pc"
+	"golang.org/x/crypto/nacl/box"
 )
 
-func Password(name string) {
+func AddPassword(name string) {
 
 	HandleVaultExist()
+
+	var c io.ConfigFile
+
+	pub, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		log.Fatalf("Could not generate site key: %s", err.Error())
+	}
+
+	config, err := io.GetConfigFile()
+	if err != nil {
+		log.Fatalf("Could not get config file name: %s", err.Error())
+	}
+
+	configContents, err := ioutil.ReadFile(config)
+	if err != nil {
+		log.Fatalf("Could not read config file contents: %s", err.Error())
+	}
+
+	err = json.Unmarshal(configContents, &c)
+	if err != nil {
+		log.Fatalf("Could not unmarshal config file contents: %s", err.Error())
+	}
+
+	masterPub := c.MasterPubKey
 
 	pass, err := io.PromptPass(fmt.Sprintf("Please enter your password for %s", name))
 	if err != nil {
 		log.Fatalf("Could not read password: %s", err.Error())
 	}
 
-	passKey, err := argon2id.CreateHash(pass, argon2id.DefaultParams)
+	passSealed, err := pc.SealAsym([]byte(pass), &masterPub, priv)
 	if err != nil {
-		log.Fatalf("Could not hash master password: %s", err.Error())
+		log.Fatalf("Could not seal new site password: %s", err.Error())
 	}
 
-	vaultDir, err := io.GetVaultFolder()
-	if err != nil {
-		log.Fatalf("Could not get vault folder dir: %s", err.Error())
+	si := io.SiteInfo{
+		PubKey:     *pub,
+		Name:       name,
+		PassSealed: passSealed,
 	}
 
-	filePath := filepath.Join(vaultDir, name) // filepath is the full path of the file
-	dir, _ := filepath.Split(filePath)        // dir is the path up to the final separator
-	err = os.MkdirAll(dir, 0700)
-	if err != nil {
-		log.Fatalf("Could not subdirectory: %s", err.Error())
-	}
+	err = si.AddFile(passSealed, name)
 
-	ioutil.WriteFile(filePath, []byte(passKey), 0666)
-
-	siteInfo := io.SiteInfo{
-		Name:           name,
-		HashedPassword: passKey,
-	}
-
-	err = siteInfo.AddFile()
 	if err != nil {
 		log.Fatalf("Could not save site info to file: %s", err.Error())
 	} else {

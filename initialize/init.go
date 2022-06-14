@@ -1,25 +1,27 @@
 package initialize
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/alexedwards/argon2id"
 	"github.com/jeremyphua/mypass/io"
+	"github.com/jeremyphua/mypass/pc"
+	"golang.org/x/crypto/nacl/box"
 )
 
 var (
 	needsDir      bool
 	hasSiteFile   bool
-	hasMasterPass bool
+	hasConfigFile bool
 	hasVault      bool
 )
 
 // Initialize a new password vault in the home directory and their respective folders
 // What will be initialize:
 // 1. application dir -> C:\Users\<name of user>\.mypass
-// 2. masterpassword file -> C:\Users\<name of user>\.mypass\masterpass
+// 2. config file -> C:\Users\<name of user>\.mypass\masterpass
 // 3. sites file -> C:\Users\<name of user>\.mypass\sites.json
 // 4. vault folder -> C:\Users\<name of user>\.mypass\vault
 func Init() {
@@ -38,8 +40,8 @@ func Init() {
 		log.Fatalf("Could not get site file: %s", err.Error())
 	}
 
-	// check if master password dir valid
-	masterPass, err := io.GetMasterPassword()
+	// check if config file dir valid
+	configFile, err := io.GetConfigFile()
 	if err != nil {
 		log.Fatalf("Could not get master password: %s", err.Error())
 	}
@@ -67,11 +69,11 @@ func Init() {
 	}
 
 	// Don't accidentally delete master password file or any file with similar name
-	if hasMasterPass {
+	if hasConfigFile {
 		log.Fatalf("Master password file already found")
 	}
 
-	CreateMasterpassFile(masterPass)
+	CreateConfigFile(configFile)
 
 	// Create and initialize the sites.json
 	if !hasSiteFile {
@@ -83,17 +85,33 @@ func Init() {
 		CreateVaultFolder(vault)
 	}
 
-	// Create hash of master password
-	passKey, err := argon2id.CreateHash(pass, argon2id.DefaultParams)
+	// kdf the master password
+	passKey, err := pc.Argon2id(pass)
 	if err != nil {
-		log.Fatalf("Could not hash master password: %s", err.Error())
+		log.Fatalf("Error hashing password using Argon2id: %s", err.Error())
 	}
 
-	// Save master password to file
-	if err = io.SaveFile(passKey); err != nil {
-		log.Fatalf("Could not write to master password file: %s", err.Error())
+	pub, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		log.Fatalf("Could not generate master key pair: %s", err.Error())
+	}
+
+	// Encrypt master private key with master password key
+	masterPrivKeySealed, err := pc.SecretboxSeal(&passKey, priv[:])
+	if err != nil {
+		log.Fatalf("Could not encrypt master key: %s", err.Error())
+	}
+
+	passConfig := io.ConfigFile{
+		MasterPrivKeySealed: masterPrivKeySealed,
+		MasterPubKey:        *pub,
+	}
+
+	// Save configs to file
+	if err = passConfig.SaveFile(); err != nil {
+		log.Fatalf("Could not write to config file: %s", err.Error())
 	} else {
-		fmt.Printf("Successfully written hashed password to masterpass file\n")
+		fmt.Printf("Successfully written config to masterpass file\n")
 	}
 
 	fmt.Println("Password Vault successfully initialized")
@@ -105,8 +123,8 @@ func checkDirAndFoldersExists() {
 		if !dirExists {
 			needsDir = true
 		} else {
-			if _, err := io.MasterPasswordExists(); err == nil { // Check masterpassword file exists
-				hasMasterPass = true
+			if _, err := io.ConfigFileExists(); err == nil { // Check config file exists
+				hasConfigFile = true
 			}
 			if _, err := io.SiteFileExists(); err == nil { // Check site file exists
 				hasSiteFile = true
@@ -130,15 +148,15 @@ func CreateAppDir(passDir string) {
 	}
 }
 
-// Create master password file with secure permission.
+// Create mconfig file with secure permission.
 // os.Create() leaves file world-readable.
-func CreateMasterpassFile(masterPass string) {
-	config, err := os.OpenFile(masterPass, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+func CreateConfigFile(configFile string) {
+	config, err := os.OpenFile(configFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalf("Could not create passgo config: %s", err.Error())
 	}
 	config.Close()
-	fmt.Printf("Successfully created masterpass file to store encrypted master password at: %s\n", masterPass)
+	fmt.Printf("Successfully created config file to store configs at: %s\n", configFile)
 }
 
 // Create file, with secure permissions.
