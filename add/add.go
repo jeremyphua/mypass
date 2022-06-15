@@ -45,15 +45,14 @@ func AddPassword(name string) {
 		log.Fatalf("Could not read password: %s", err.Error())
 	}
 
-	passSealed, err := pc.SealAsym([]byte(pass), &masterPub, priv)
+	passSealed, err := pc.BoxSeal([]byte(pass), &masterPub, priv)
 	if err != nil {
 		log.Fatalf("Could not seal new site password: %s", err.Error())
 	}
 
 	si := io.SiteInfo{
-		PubKey:     *pub,
-		Name:       name,
-		PassSealed: passSealed,
+		PubKey: *pub,
+		Name:   name,
 	}
 
 	err = si.AddFile(passSealed, name)

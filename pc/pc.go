@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 
 	"github.com/alexedwards/argon2id"
+	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
@@ -22,4 +23,13 @@ func SecretboxSeal(key *[32]byte, message []byte) ([]byte, error) {
 		return nil, err
 	}
 	return secretbox.Seal(nonce[:], message, &nonce, key), nil
+}
+
+// Wrapper around box.Seal to create a randomly generated nonce
+func BoxSeal(message []byte, pub *[32]byte, priv *[32]byte) (out []byte, err error) {
+	var nonce [24]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
+		return nil, err
+	}
+	return box.Seal(nonce[:], message, &nonce, pub, priv), nil
 }
