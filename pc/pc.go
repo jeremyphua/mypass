@@ -8,21 +8,31 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
+var customArgon2idParams = &argon2id.Params{
+	Memory:      64 * 1024,
+	Iterations:  1,
+	Parallelism: 2,
+	SaltLength:  16,
+	KeyLength:   8,
+}
+
 // Wrapper around argon2id.CreateHash to create generic function to take in string input
 // Return a 32-bytes key
-func Argon2id(password string) (key [32]byte, err error) {
-	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
-	copy(key[:], hash)
+func Argon2id(password string) (key []byte, err error) {
+	hash, err := argon2id.CreateHash(password, customArgon2idParams)
+	key = []byte(hash)
 	return
 }
 
 // Randomly generate a nonce to eliminate risk of reusing nonce
-func SecretboxSeal(key *[32]byte, message []byte) ([]byte, error) {
+func SecretboxSeal(key []byte, message []byte) ([]byte, error) {
 	var nonce [24]byte
 	if _, err := rand.Read(nonce[:]); err != nil {
 		return nil, err
 	}
-	return secretbox.Seal(nonce[:], message, &nonce, key), nil
+	var keyArr [32]byte
+	copy(keyArr[:], key)
+	return secretbox.Seal(nonce[:], message, &nonce, &keyArr), nil
 }
 
 // Wrapper around box.Seal to create a randomly generated nonce
