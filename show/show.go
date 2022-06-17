@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/jeremyphua/mypass/io"
+	"github.com/jeremyphua/mypass/pc"
 )
 
 // Site will print out the password of the site that matches path
@@ -18,9 +19,10 @@ func Site(path string) {
 	}
 
 	// get master private key
-	//masterPrivKey := pc.GetMasterKey()
+	masterPrivKey := pc.GetMasterPrivKey()
 
 	// show password
+	showPassword(siteInfo.PubKey, masterPrivKey)
 }
 
 // GetSiteInfo returns the site information for that particular entry
@@ -42,4 +44,8 @@ func GetSiteInfo(searchFor string) (si io.SiteInfo) {
 		}
 	}
 	return
+}
+
+func showPassword(sitePubKey [32]byte, masterPrivKey []byte) {
+
 }
