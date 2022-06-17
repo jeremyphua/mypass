@@ -97,7 +97,7 @@ func Init() {
 	}
 
 	// Encrypt master private key with master password key
-	masterPrivKeySealed, err := pc.SecretboxSeal(&passKey, priv[:])
+	masterPrivKeySealed, err := pc.SecretboxSeal(passKey, priv[:])
 	if err != nil {
 		log.Fatalf("Could not encrypt master key: %s", err.Error())
 	}
