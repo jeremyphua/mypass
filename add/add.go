@@ -40,6 +40,10 @@ func AddPassword(name string) {
 
 	masterPub := c.MasterPubKey
 
+	// prompt for username
+	username := io.PromptUsername(name)
+
+	// prompt for password
 	pass, err := io.PromptPass(fmt.Sprintf("Please enter your password for %s", name))
 	if err != nil {
 		log.Fatalf("Could not read password: %s", err.Error())
@@ -51,8 +55,9 @@ func AddPassword(name string) {
 	}
 
 	si := io.SiteInfo{
-		PubKey: *pub,
-		Name:   name,
+		PubKey:   *pub,
+		Name:     name,
+		Username: username,
 	}
 
 	err = si.AddFile(passSealed, name)

@@ -3,6 +3,7 @@ package pc
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -91,18 +92,25 @@ func GetMasterPrivKey() (masterPrivKey [32]byte) {
 		log.Fatalf("Could not read unmarshal config file: %s", err.Error())
 	}
 
-	match, err := argon2id.ComparePasswordAndHash(pass, string(c.MasterPassKey))
+	validateMasterPassword(pass, string(c.MasterPassKey))
+
+	masterPrivKeySlice, ok := SecretboxOpen(c.MasterPassKey, c.MasterPrivKeySealed)
+
+	if !ok {
+		log.Fatalf("Failed to get master private key")
+	}
+
+	copy(masterPrivKey[:], masterPrivKeySlice)
+	fmt.Println("Authentication success!")
+	return
+}
+
+func validateMasterPassword(input string, encryptedMasterPassword string) {
+	match, err := argon2id.ComparePasswordAndHash(input, encryptedMasterPassword)
 	if err != nil {
 		log.Fatalf("Error comparing password: %s", err.Error())
 	}
 	if !match {
 		log.Fatalf("Wrong master password")
 	}
-
-	masterPrivKeySlice, ok := SecretboxOpen(c.MasterPassKey, c.MasterPrivKeySealed)
-	if !ok {
-		log.Fatalf("Failed to get master private key")
-	}
-	copy(masterPrivKey[:], masterPrivKeySlice)
-	return
 }

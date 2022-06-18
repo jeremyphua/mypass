@@ -1,6 +1,7 @@
 package io
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -26,8 +28,9 @@ type ConfigFile struct {
 
 // SiteInfo represents a single saved password entry.
 type SiteInfo struct {
-	PubKey [32]byte
-	Name   string
+	PubKey   [32]byte
+	Name     string
+	Username string
 }
 
 // contents of sites.json
@@ -244,4 +247,16 @@ func PromptPass(prompt string) (pass string, err error) {
 	passBytes, err := terminal.ReadPassword(fd)
 	fmt.Println("")
 	return string(passBytes), err
+}
+
+func PromptUsername(path string) (input string) {
+	fmt.Printf("Enter your username for %s: ", path)
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal("An error occured while reading input. Please try again", err)
+	}
+	// remove the delimeter from the string
+	input = strings.TrimSuffix(input, "\r\n")
+	return
 }

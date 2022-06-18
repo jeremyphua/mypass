@@ -24,7 +24,7 @@ func Site(path string) {
 	masterPrivKey := pc.GetMasterPrivKey()
 
 	// show password
-	showPassword(siteInfo, masterPrivKey)
+	showUsernameAndPassword(siteInfo, masterPrivKey)
 }
 
 // GetSiteInfo returns the site information for that particular entry
@@ -48,16 +48,17 @@ func GetSiteInfo(searchFor string) (si io.SiteInfo) {
 	return
 }
 
-func showPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte) {
+func showUsernameAndPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte) {
 	vault, err := io.GetVaultFolder()
 	if err != nil {
 		log.Fatalf("Could not get vault: %s", err.Error())
 	}
 	encFilePath := filepath.Join(vault, siteInfo.Name)
 	encryptedPassword, err := ioutil.ReadFile(encFilePath)
-	decrypted, ok := pc.BoxOpen(encryptedPassword, &siteInfo.PubKey, &masterPrivKey)
+	password, ok := pc.BoxOpen(encryptedPassword, &siteInfo.PubKey, &masterPrivKey)
 	if !ok {
 		log.Fatalf("Error decryption password")
 	}
-	fmt.Println(string(decrypted))
+	fmt.Printf("Username: %-20s\n", siteInfo.Username)
+	fmt.Printf("Password: %-20s\n", password)
 }
