@@ -19,6 +19,7 @@ const (
 )
 
 type ConfigFile struct {
+	MasterPassKey       []byte
 	MasterPrivKeySealed []byte
 	MasterPubKey        [32]byte
 }
@@ -141,7 +142,7 @@ func GetVaultFolder() (v string, err error) {
 
 // Add SiteInfo to sites.json
 func (s *SiteInfo) AddFile(fileBytes []byte, filename string) error {
-	encFileDir, err := GetVaultFolder()
+	vault, err := GetVaultFolder()
 	if err != nil {
 		return err
 	}
@@ -151,12 +152,12 @@ func (s *SiteInfo) AddFile(fileBytes []byte, filename string) error {
 		return err
 	}
 	if !fileDirExists {
-		err = os.Mkdir(encFileDir, 0700)
+		err = os.Mkdir(vault, 0700)
 		if err != nil {
 			log.Fatalf("Could not create passgo encrypted file dir: %s", err.Error())
 		}
 	}
-	encFilePath := filepath.Join(encFileDir, filename)
+	encFilePath := filepath.Join(vault, filename)
 	dir, _ := filepath.Split(encFilePath)
 	err = os.MkdirAll(dir, 0700)
 	if err != nil {
@@ -180,7 +181,7 @@ func (s *SiteInfo) AddSite() (err error) {
 		}
 	}
 	siteFile = append(siteFile, *s)
-	return UpdateVault(siteFile)
+	return UpdateSiteFile(siteFile)
 }
 
 // Returns SiteFile which is a slice of SiteInfo
@@ -203,23 +204,8 @@ func GetSites() (s SiteFile) {
 	return
 }
 
-// UpdateVault is used to replace the current password vault.
-func UpdateVault(s SiteFile) (err error) {
-	si, err := GetSiteFile()
-	if err != nil {
-		log.Fatalf("Could not get pass dir: %s", err.Error())
-	}
-	siteFileContents, err := json.MarshalIndent(s, "", "\t")
-	if err != nil {
-		log.Fatalf("Could not marshal site info: %s", err.Error())
-	}
-
-	// Write the site with the newly appended site to the file.
-	err = ioutil.WriteFile(si, siteFileContents, 0666)
-	return
-}
-
-func UpdateSitesFile(s SiteFile) (err error) {
+// UpdateSiteFile is used to replace the current sites.json.
+func UpdateSiteFile(s SiteFile) (err error) {
 	si, err := GetSiteFile()
 	if err != nil {
 		log.Fatalf("Could not get site file: %s", err.Error())
@@ -228,6 +214,7 @@ func UpdateSitesFile(s SiteFile) (err error) {
 	if err != nil {
 		log.Fatalf("Could not marshal site info: %s", err.Error())
 	}
+
 	// Write the site with the newly appended site to the file.
 	err = ioutil.WriteFile(si, siteFileContents, 0666)
 	return

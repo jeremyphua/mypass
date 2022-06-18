@@ -2,8 +2,10 @@ package show
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/jeremyphua/mypass/io"
 	"github.com/jeremyphua/mypass/pc"
@@ -22,7 +24,7 @@ func Site(path string) {
 	masterPrivKey := pc.GetMasterPrivKey()
 
 	// show password
-	showPassword(siteInfo.PubKey, masterPrivKey)
+	showPassword(siteInfo, masterPrivKey)
 }
 
 // GetSiteInfo returns the site information for that particular entry
@@ -46,6 +48,16 @@ func GetSiteInfo(searchFor string) (si io.SiteInfo) {
 	return
 }
 
-func showPassword(sitePubKey [32]byte, masterPrivKey []byte) {
-
+func showPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte) {
+	vault, err := io.GetVaultFolder()
+	if err != nil {
+		log.Fatalf("Could not get vault: %s", err.Error())
+	}
+	encFilePath := filepath.Join(vault, siteInfo.Name)
+	encryptedPassword, err := ioutil.ReadFile(encFilePath)
+	decrypted, ok := pc.BoxOpen(encryptedPassword, &siteInfo.PubKey, &masterPrivKey)
+	if !ok {
+		log.Fatalf("Error decryption password")
+	}
+	fmt.Println(string(decrypted))
 }

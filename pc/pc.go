@@ -3,6 +3,7 @@ package pc
 import (
 	"crypto/rand"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 
 	"github.com/alexedwards/argon2id"
@@ -60,37 +61,48 @@ func BoxSeal(message []byte, pub *[32]byte, priv *[32]byte) (out []byte, err err
 	return box.Seal(nonce[:], message, &nonce, pub, priv), nil
 }
 
+func BoxOpen(encrypted []byte, pub *[32]byte, priv *[32]byte) ([]byte, bool) {
+	var decryptNonce [24]byte
+	copy(decryptNonce[:], encrypted[:24])
+	return box.Open(nil, encrypted[24:], &decryptNonce, pub, priv)
+}
+
 // Retrieve master private key
-func GetMasterPrivKey() []byte {
+func GetMasterPrivKey() (masterPrivKey [32]byte) {
 	pass, err := io.PromptPass("Please enter master password")
 	if err != nil {
 		log.Fatalf("Could not read password: %s", err.Error())
 	}
 
-	c, err := io.GetConfigFile()
+	cfile, err := io.GetConfigFile()
 	if err != nil {
 		log.Fatalf("Could not get config file: %s", err.Error())
 	}
 
-	var configFile io.ConfigFile
-	configFileBytes, err := io.util.ReadFile(configFile)
+	var c io.ConfigFile
+
+	configFileBytes, err := ioutil.ReadFile(cfile)
 	if err != nil {
 		log.Fatalf("Could not read config file: %s", err.Error())
 	}
 
-	err = json.Unmarshal(configFileBytes, &configFile)
+	err = json.Unmarshal(configFileBytes, &c)
 	if err != nil {
 		log.Fatalf("Could not read unmarshal config file: %s", err.Error())
 	}
 
-	passKey, err := pc.Argon2id(pass)
+	match, err := argon2id.ComparePasswordAndHash(pass, string(c.MasterPassKey))
 	if err != nil {
-		log.Fatalf("Error hashing password using Argon2id: %s", err.Error())
+		log.Fatalf("Error comparing password: %s", err.Error())
 	}
-
-	masterPrivKey, ok := SecretboxOpen(passKey, configFile.MasterPrivKeySealed)
-	if !ok {
+	if !match {
 		log.Fatalf("Wrong master password")
 	}
-	return masterPrivKey
+
+	masterPrivKeySlice, ok := SecretboxOpen(c.MasterPassKey, c.MasterPrivKeySealed)
+	if !ok {
+		log.Fatalf("Failed to get master private key")
+	}
+	copy(masterPrivKey[:], masterPrivKeySlice)
+	return
 }

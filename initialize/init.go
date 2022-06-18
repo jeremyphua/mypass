@@ -103,6 +103,7 @@ func Init() {
 	}
 
 	passConfig := io.ConfigFile{
+		MasterPassKey:       passKey,
 		MasterPrivKeySealed: masterPrivKeySealed,
 		MasterPubKey:        *pub,
 	}
