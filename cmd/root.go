@@ -6,6 +6,8 @@ package cmd
 import (
 	"os"
 
+	"github.com/jeremyphua/mypass/io"
+	"github.com/jeremyphua/mypass/show"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +15,14 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "mypass",
 	Short: "A tool to manage your password",
-	Long:  `mypass is a CLI tool to enable users to manage their passwords through the terminal.`,
+	Long:  `Prints the content of your vault. If you have not initialized your vault, please run the init subcommand to get started.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if exists, _ := io.VaultExists(); exists {
+			show.ListAll()
+		} else {
+			cmd.Help()
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
