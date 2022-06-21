@@ -13,13 +13,6 @@ import (
 	"github.com/jeremyphua/mypass/pc"
 )
 
-var (
-	lastPrefix      = "└──"
-	regPrefix       = "├──"
-	innerPrefix     = "|  "
-	innerLastPrefix = "   "
-)
-
 // list all sites
 func ListAll() {
 	allSites := GetSiteInfoByGroup()
