@@ -25,7 +25,7 @@ func AddPassword(name string) {
 
 	config, err := io.GetConfigFile()
 	if err != nil {
-		log.Fatalf("Could not get config file name: %s", err.Error())
+		log.Fatalf("Could not get config file: %s", err.Error())
 	}
 
 	configContents, err := ioutil.ReadFile(config)
@@ -41,7 +41,7 @@ func AddPassword(name string) {
 	masterPub := c.MasterPubKey
 
 	// prompt for username
-	username := io.PromptUsername(name)
+	username := io.Prompt(fmt.Sprintf("Enter your username for %s: ", name))
 
 	// prompt for password
 	pass, err := io.PromptPass(fmt.Sprintf("Please enter your password for %s", name))

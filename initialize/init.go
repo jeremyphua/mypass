@@ -43,7 +43,7 @@ func Init() {
 	// check if config file dir valid
 	configFile, err := io.GetConfigFile()
 	if err != nil {
-		log.Fatalf("Could not get master password: %s", err.Error())
+		log.Fatalf("Could not get config file: %s", err.Error())
 	}
 
 	// check if vault dir valid

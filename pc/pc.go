@@ -62,10 +62,43 @@ func BoxSeal(message []byte, pub *[32]byte, priv *[32]byte) (out []byte, err err
 	return box.Seal(nonce[:], message, &nonce, pub, priv), nil
 }
 
+// wrapper around box.Open
 func BoxOpen(encrypted []byte, pub *[32]byte, priv *[32]byte) ([]byte, bool) {
 	var decryptNonce [24]byte
 	copy(decryptNonce[:], encrypted[:24])
 	return box.Open(nil, encrypted[24:], &decryptNonce, pub, priv)
+}
+
+// Reencrypt new password using BoxSeal
+func ReEncrypt(s io.SiteInfo, password string) (io.SiteInfo, []byte) {
+	var c io.ConfigFile
+	pub, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		log.Fatalf("Could not generate site key: %s", err.Error())
+	}
+	config, err := io.GetConfigFile()
+	if err != nil {
+		log.Fatalf("Could not get config file: %s", err.Error())
+	}
+	configContents, err := ioutil.ReadFile(config)
+	if err != nil {
+		log.Fatalf("Could not read contents of config: %s", err.Error())
+	}
+	err = json.Unmarshal(configContents, &c)
+
+	masterPub := c.MasterPubKey
+
+	passSealed, err := BoxSeal([]byte(password), &masterPub, priv)
+	if err != nil {
+		log.Fatalf("Could not seal new site password: %s", err.Error())
+	}
+
+	return io.SiteInfo{
+		Name:     s.Name,
+		PubKey:   *pub,
+		Username: s.Username,
+	}, passSealed
+
 }
 
 // Retrieve master private key
