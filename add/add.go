@@ -41,7 +41,7 @@ func AddPassword(name string) {
 	masterPub := c.MasterPubKey
 
 	// prompt for username
-	username := io.PromptUsername(name)
+	username := io.Prompt(fmt.Sprintf("Enter your username for %s: ", name))
 
 	// prompt for password
 	pass, err := io.PromptPass(fmt.Sprintf("Please enter your password for %s", name))

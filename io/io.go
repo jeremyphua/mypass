@@ -259,8 +259,8 @@ func PromptPass(prompt string) (pass string, err error) {
 	return string(passBytes), err
 }
 
-func PromptUsername(path string) (input string) {
-	fmt.Printf("Enter your username for %s: ", path)
+func Prompt(prompt string) (input string) {
+	fmt.Printf("%s", prompt)
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
