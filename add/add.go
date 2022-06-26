@@ -25,7 +25,7 @@ func AddPassword(name string) {
 
 	config, err := io.GetConfigFile()
 	if err != nil {
-		log.Fatalf("Could not get config file name: %s", err.Error())
+		log.Fatalf("Could not get config file: %s", err.Error())
 	}
 
 	configContents, err := ioutil.ReadFile(config)

@@ -241,6 +241,16 @@ func (c *ConfigFile) SaveFile() (err error) {
 	return
 }
 
+func UpdateVaultFile(path string, sealedPass []byte) (err error) {
+	vault, err := GetVaultFolder()
+	if err != nil {
+		log.Fatalf("Could not get vault path: %s", err)
+	}
+	filepath := filepath.Join(vault, path)
+	err = ioutil.WriteFile(filepath, sealedPass, 0666)
+	return
+}
+
 func PromptPass(prompt string) (pass string, err error) {
 	fd := int(os.Stdin.Fd())
 	fmt.Printf("%s: ", prompt)
