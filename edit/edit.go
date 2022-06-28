@@ -3,6 +3,8 @@ package edit
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/jeremyphua/mypass/io"
 	"github.com/jeremyphua/mypass/pc"
@@ -72,4 +74,36 @@ func editUserName(name string) {
 			}
 		}
 	}
+}
+
+func DeleteSite(site string) {
+	sites := io.GetSites()
+	pathIndex := -1
+	for index, siteInfo := range sites {
+		if siteInfo.Name == site {
+			// validate master password
+			// assign to empty variable because we do not need the master private key
+			_ = pc.GetMasterPrivKey()
+			pathIndex = index
+			vault, err := io.GetVaultFolder()
+			if err != nil {
+				log.Fatalf("Could not get vault: %s", err.Error())
+			}
+			filePath := filepath.Join(vault, site)
+			err = os.Remove(filePath)
+			if err != nil {
+				log.Fatalf("Attempted to remove file but was unable to: %s", err.Error())
+			}
+			break
+		}
+	}
+	if pathIndex == -1 {
+		log.Fatalf("Could not find %s in vault", site)
+	}
+	sites = append(sites[:pathIndex], sites[pathIndex+1:]...)
+	err := io.UpdateSiteFile(sites)
+	if err != nil {
+		log.Fatalf("Could not update password vault: %s", err.Error())
+	}
+	fmt.Printf("Successfully deleted credentials for %s", site)
 }
