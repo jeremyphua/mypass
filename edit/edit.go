@@ -87,7 +87,7 @@ func DeleteSite(site string) {
 			pathIndex = index
 			vault, err := io.GetVaultFolder()
 			if err != nil {
-				log.Fatalf("Could not get vault: %s", err.Error())
+				go log.Fatalf("Could not get vault: %s", err.Error())
 			}
 			filePath := filepath.Join(vault, site)
 			err = os.Remove(filePath)
@@ -106,4 +106,26 @@ func DeleteSite(site string) {
 		log.Fatalf("Could not update password vault: %s", err.Error())
 	}
 	fmt.Printf("Successfully deleted credentials for %s", site)
+}
+
+func Rename(site string) {
+	sites := io.GetSites()
+	for index, siteInfo := range sites {
+		if siteInfo.Name == site {
+			// validate master password
+			// assign to empty variable because we do not need the master private key
+			_ = pc.GetMasterPrivKey()
+			newSiteName := io.Prompt(fmt.Sprintf("Enter new sitename for %s: ", site))
+			sites[index] = io.SiteInfo{
+				PubKey:   siteInfo.PubKey,
+				Name:     newSiteName,
+				Username: siteInfo.Username,
+			}
+			err := io.UpdateSiteFile(sites)
+			if err != nil {
+				log.Fatalf("Could not edit %s in sites.json: %s", site, err.Error())
+			}
+			io.UpdateFileName(site, newSiteName)
+		}
+	}
 }

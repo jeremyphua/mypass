@@ -143,7 +143,7 @@ func GetVaultFolder() (v string, err error) {
 	return
 }
 
-// Add SiteInfo to sites.json
+// Add SiteInfo to vault
 func (s *SiteInfo) AddFile(fileBytes []byte, filename string) error {
 	vault, err := GetVaultFolder()
 	if err != nil {
@@ -249,6 +249,55 @@ func UpdateVaultFile(path string, sealedPass []byte) (err error) {
 	filepath := filepath.Join(vault, path)
 	err = ioutil.WriteFile(filepath, sealedPass, 0666)
 	return
+}
+
+func UpdateFileName(oldSiteName, newSiteName string) {
+	vault, err := GetVaultFolder()
+	if err != nil {
+		log.Fatalf("Could not get vault path: %s", err)
+	}
+	oldFilePath := filepath.Join(vault, oldSiteName)
+	fileContent, err := ioutil.ReadFile(oldFilePath)
+	if err != nil {
+		log.Fatalf("Could not read site file: %s", err.Error())
+	}
+	err = os.Remove(oldFilePath)
+	if err != nil {
+		log.Fatalf("Could not remove file: %s", err.Error())
+	}
+	err = createNewVault(fileContent, newSiteName)
+	if err != nil {
+		log.Fatalf("Error creating new vault folder: %s", err.Error())
+	}
+}
+
+func createNewVault(fileBytes []byte, filename string) error {
+	vault, err := GetVaultFolder()
+	if err != nil {
+		return err
+	}
+	// Make sure that the file directory exists.
+	fileDirExists, err := ConfigFileExists()
+	if err != nil {
+		return err
+	}
+	if !fileDirExists {
+		err = os.Mkdir(vault, 0700)
+		if err != nil {
+			log.Fatalf("Could not create passgo encrypted file dir: %s", err.Error())
+		}
+	}
+	encFilePath := filepath.Join(vault, filename)
+	dir, _ := filepath.Split(encFilePath)
+	err = os.MkdirAll(dir, 0700)
+	if err != nil {
+		log.Fatalf("Could not create subdirectory: %s", err.Error())
+	}
+	err = ioutil.WriteFile(encFilePath, fileBytes, 0666)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func PromptPass(prompt string) (pass string, err error) {
