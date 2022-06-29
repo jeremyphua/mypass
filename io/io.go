@@ -288,10 +288,8 @@ func createNewVault(fileBytes []byte, filename string) error {
 		}
 	}
 	encFilePath := filepath.Join(vault, filename)
-	fmt.Println(encFilePath)
 	dir, _ := filepath.Split(encFilePath)
 	err = os.MkdirAll(dir, 0700)
-	fmt.Println(dir)
 	if err != nil {
 		log.Fatalf("Could not create subdirectory: %s", err.Error())
 	}
