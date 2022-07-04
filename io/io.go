@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -318,4 +319,10 @@ func Prompt(prompt string) (input string) {
 	// remove the delimeter from the string
 	input = strings.TrimSuffix(input, "\r\n")
 	return
+}
+
+func ToClipboard(s string) {
+	if err := clipboard.WriteAll(s); err != nil {
+		log.Fatalf("Could not copy password to clipboard: %s", err.Error())
+	}
 }
