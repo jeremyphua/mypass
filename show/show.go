@@ -54,7 +54,7 @@ func showResults(allSites map[string]io.SiteFile) {
 }
 
 // Site will print out the password of the site that matches path
-func Site(path string) {
+func Site(path string, copyPassword bool) {
 	// get site information from sites.json
 	// site, err := GetSiteInfo(path)
 	siteInfo := GetSiteInfo(path)
@@ -66,7 +66,7 @@ func Site(path string) {
 	masterPrivKey := pc.GetMasterPrivKey()
 
 	// show password
-	showUsernameAndPassword(siteInfo, masterPrivKey)
+	showUsernameAndPassword(siteInfo, masterPrivKey, copyPassword)
 }
 
 // GetSiteInfo returns the site information for that particular entry
@@ -81,7 +81,7 @@ func GetSiteInfo(searchFor string) (si io.SiteInfo) {
 	return
 }
 
-func showUsernameAndPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte) {
+func showUsernameAndPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte, copyPassword bool) {
 	vault, err := io.GetVaultFolder()
 	if err != nil {
 		log.Fatalf("Could not get vault: %s", err.Error())
@@ -93,7 +93,12 @@ func showUsernameAndPassword(siteInfo io.SiteInfo, masterPrivKey [32]byte) {
 		log.Fatalf("Error decryption password")
 	}
 	fmt.Printf("Username: %-20s\n", siteInfo.Username)
-	fmt.Printf("Password: %-20s\n", password)
+
+	if copyPassword {
+		io.ToClipboard(string(password))
+	} else {
+		fmt.Printf("Password: %-20s\n", password)
+	}
 }
 
 func getSiteFileContent() (sf io.SiteFile) {
