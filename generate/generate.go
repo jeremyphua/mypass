@@ -1,0 +1,5 @@
+package generate
+
+func Password() {
+
+}
