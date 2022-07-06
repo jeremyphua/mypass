@@ -13,6 +13,38 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
+const (
+	// password length
+	pwLength = 20
+
+	// ASCII bound values
+	// https://design215.com/toolbox/ascii-utf8.php
+	// Uppercase ASCII bound values
+	upperCaseLowerbound = 65
+	upperCaseUpperbound = 90
+
+	// Lowercase ASCII bound values
+	lowerCaseLowerbound = 97
+	lowerCaseUpperbound = 122
+
+	// Digit ASCII bound values
+	digitCaseLowerbound = 48
+	digitCaseUpperbound = 57
+
+	// Symbol ASCII bound values
+	symbolGroupOneLowerbound = 33
+	symbolGroupOneUpperbound = 47
+
+	symbolGroupTwoLowerbound = 58
+	symbolGroupTwoUpperbound = 64
+
+	symbolGroupThreeLowerbound = 91
+	symbolGroupThreeUpperbound = 96
+
+	symbolGroupFourLowerbound = 123
+	symbolGroupFourUpperbound = 126
+)
+
 var customArgon2idParams = &argon2id.Params{
 	Memory:      64 * 1024,
 	Iterations:  1,
@@ -146,4 +178,93 @@ func validateMasterPassword(input string, encryptedMasterPassword string) {
 	if !match {
 		log.Fatalf("Wrong master password")
 	}
+}
+
+func GeneratePassword() (password string, err error) {
+	// make a slice of random bytes
+	letters := make([]byte, 10000)
+
+	// read random bytes
+	_, err = rand.Read(letters)
+	if err != nil {
+		return
+	}
+
+	password = ""
+	for _, letter := range letters {
+		// Check letter is in the range of printable characters
+		if letter > 32 && letter < 127 {
+			password += string(letter)
+		}
+		// If length of password reach 12, check if it is valid
+		if len(password) == pwLength {
+			if validPassword(password) {
+				return
+			}
+			// trim left character of password
+			password = password[1:]
+		}
+	}
+	return
+}
+
+func validPassword(password string) bool {
+	isUpper := false
+	isLower := false
+	isSymbol := false
+	isDigit := false
+
+	for i := 0; i < len(password); i++ {
+		if isASCIIUpper(password[i]) {
+			isUpper = true
+		}
+		if isASCIILower(password[i]) {
+			isLower = true
+		}
+		if isASCIISymbol(password[i]) {
+			isSymbol = true
+		}
+		if isASCIIDigit(password[i]) {
+			isDigit = true
+		}
+		if isUpper && isLower && isSymbol && isDigit {
+			return true
+		}
+	}
+	return false
+}
+
+func isASCIIUpper(letter byte) bool {
+	return checkBound(letter, upperCaseLowerbound, upperCaseUpperbound)
+}
+
+func isASCIILower(letter byte) bool {
+	return checkBound(letter, lowerCaseLowerbound, lowerCaseUpperbound)
+}
+
+func isASCIISymbol(letter byte) bool {
+	if checkBound(letter, symbolGroupOneLowerbound, symbolGroupOneUpperbound) {
+		return true
+	}
+	if checkBound(letter, symbolGroupTwoLowerbound, symbolGroupTwoUpperbound) {
+		return true
+	}
+	if checkBound(letter, symbolGroupThreeLowerbound, symbolGroupThreeUpperbound) {
+		return true
+	}
+	if checkBound(letter, symbolGroupFourLowerbound, symbolGroupFourUpperbound) {
+		return true
+	}
+	return false
+}
+
+func isASCIIDigit(letter byte) bool {
+	return checkBound(letter, digitCaseLowerbound, digitCaseUpperbound)
+}
+
+func checkBound(letter byte, lowerBound, upperBound int) bool {
+	if int(letter) >= lowerBound && int(letter) <= upperBound {
+		return true
+	}
+	return false
 }
