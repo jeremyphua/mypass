@@ -5,6 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/jeremyphua/mypass/generate"
 	"github.com/spf13/cobra"
 )
@@ -14,10 +16,11 @@ var generateCmd = &cobra.Command{
 	Use:     "generate",
 	Short:   "Generate a secure password",
 	Example: "mypass generator",
-	Long:    `Prints a randomly generated password of length 12.`,
+	Long:    `Prints a randomly generated password. The default length is 20.`,
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		generate.Password()
+		password := generate.Password()
+		fmt.Println(password)
 	},
 }
 

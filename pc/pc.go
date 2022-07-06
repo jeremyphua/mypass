@@ -147,3 +147,94 @@ func validateMasterPassword(input string, encryptedMasterPassword string) {
 		log.Fatalf("Wrong master password")
 	}
 }
+
+func GeneratePassword() (password string, err error) {
+	// make a slice of random bytes
+	letters := make([]byte, 65535)
+
+	// read random bytes
+	_, err = rand.Read(letters)
+	if err != nil {
+		return
+	}
+
+	password = ""
+	for _, letter := range letters {
+		// Check letter is in the range of printable characters
+		if letter > 32 && letter < 127 {
+			password += string(letter)
+		}
+		// If length of password reach 12, check if it is valid
+		if len(password) == 20 {
+			if validPassword(password) {
+				return
+			}
+			// trim left character of password
+			password = password[1:]
+		}
+	}
+	return
+}
+
+func validPassword(password string) bool {
+	isUpper := false
+	isLower := false
+	isSymbol := false
+	isDigit := false
+
+	for i := 0; i < len(password); i++ {
+		if isASCIIUpper(password[i]) {
+			isUpper = true
+		}
+		if isASCIILower(password[i]) {
+			isLower = true
+		}
+		if isASCIISymbol(password[i]) {
+			isSymbol = true
+		}
+		if isASCIIDigit(password[i]) {
+			isDigit = true
+		}
+		if isUpper && isLower && isSymbol && isDigit {
+			return true
+		}
+	}
+	return false
+}
+
+// Refactor bound values to const
+
+func isASCIIUpper(letter byte) bool {
+	return checkBound(letter, 65, 90)
+}
+
+func isASCIILower(letter byte) bool {
+	return checkBound(letter, 97, 122)
+}
+
+func isASCIISymbol(letter byte) bool {
+	if checkBound(letter, 33, 47) {
+		return true
+	}
+	if checkBound(letter, 58, 64) {
+		return true
+	}
+	if checkBound(letter, 91, 96) {
+		return true
+	}
+	if checkBound(letter, 123, 126) {
+		return true
+	}
+	return false
+}
+
+func isASCIIDigit(letter byte) bool {
+	return checkBound(letter, 48, 57)
+}
+
+func checkBound(letter byte, lowerBound, upperBound int) bool {
+	if int(letter) >= lowerBound && int(letter) <= upperBound {
+		return true
+	}
+	return false
+}
