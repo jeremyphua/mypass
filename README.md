@@ -7,7 +7,7 @@ mypass is a command line tool built using Go which provides credentials manageme
 Navigate to project directory and run:
 
 ```bash
-$ go install
+$ go install github.com/jeremyphua/mypass@latest
 ```
 
 ## Commands
