@@ -14,13 +14,23 @@ $ go install github.com/jeremyphua/mypass@latest
 
 ### Initialize
 
+#### Diagram
+![Cryptography (initialize) drawio](https://user-images.githubusercontent.com/68652470/178418029-6dfed257-ed36-4bcd-b015-7adac9788064.png)
+
+#### How to use:
+
 Initialize mypass:
 
 ```bash
 $ mypass init
 ```
-
+---
 ### Add
+
+#### Diagram
+![Cryptography (Add) drawio](https://user-images.githubusercontent.com/68652470/178418114-9931887f-1401-4c88-b5de-f913c2168720.png)
+
+#### How to use:
 
 Add credentials for finance/ocbc:
 
@@ -33,8 +43,13 @@ Example:
 ```bash
 $ mypass add finance/ocbc
 ```
-
+---
 ### Show
+
+#### Diagram
+![Cryptography (Show) drawio](https://user-images.githubusercontent.com/68652470/178418211-deac59db-eaa0-469d-844b-d9baf0757328.png)
+
+#### how to use:
 
 Show all site credentials:
 
@@ -53,7 +68,7 @@ Example:
 ```bash
 $ mypass show finance/ocbc
 ```
-
+---
 ### Edit
 
 Edit credential:
@@ -67,6 +82,7 @@ Example:
 ```bash
 $ mypass edit finance/ocbc
 ```
+
 
 
 
